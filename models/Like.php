@@ -8,6 +8,12 @@ class Like extends CcLikeItAppModel {
 		}
 
 		$journal = ClassRegistry::init('Journal');
+
+		$liked = $journal->getLiked($issue_id,$currentuser['id']);
+		if ($liked) {
+			return false;
+		}
+
 		$data = array(
 			'Journal' => array(
 				'journalized_id' => $issue_id,
@@ -23,10 +29,10 @@ class Like extends CcLikeItAppModel {
 				)
 			)
 		);
-		$journal->saveAll($data);
+		return $journal->saveAll($data);
 	}
 
-	public function getLiked($issue_id) {
+	public function getLiked($issue_id,$user_id = null) {
 		$journal = ClassRegistry::init('Journal');
 		$journal->unbindModel(array(
 			'hasMany' => array('JournalDetail')
@@ -43,11 +49,17 @@ class Like extends CcLikeItAppModel {
 				)
 			)
 		));
+
+		$conditions = array(
+			'Journal.journalized_id' => $issue_id,
+			'Journal.journalized_type' => 'Issue'
+		);
+
+		if ($user_id) {
+			$conditions['Journal.user_id'] = $user_id;
+		}
 		$count = $journal->find('count',array(
-			'conditions' => array(
-				'Journal.journalized_id' => $issue_id,
-				'Journal.journalized_type' => 'Issue'
-			)
+			'conditions' => $conditions
 		));
 		return $count;
 	}
